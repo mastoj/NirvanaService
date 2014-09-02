@@ -14,6 +14,7 @@ namespace NirvanaService
 
         private readonly string _name;
         private string _a;
+        private Process _process;
 
         public ServiceWrapper(string name, string a = "")
         {
@@ -41,11 +42,11 @@ namespace NirvanaService
                 if (configs.ContainsKey(_a))
                 {
                     var config = configs[_a];
-                    var process = Process.Start(new ProcessStartInfo(config.Executable, config.Options.ToString())
+                    _process = Process.Start(new ProcessStartInfo(config.Executable, config.Options.ToString())
                     {
                         UseShellExecute = false
                     });
-                    process.Exited += (o, e) => Stop();
+                    _process.Exited += (o, e) => Stop();
                 }
             }
             catch (Exception ex)
@@ -58,8 +59,13 @@ namespace NirvanaService
 
         public void Stop()
         {
-            
+            _process.Refresh();
 
+            if (_process.HasExited) return;
+
+            _process.Kill();
+            _process.WaitForExit();
+            _process.Dispose();
         }
     }
 
