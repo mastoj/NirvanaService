@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Topshelf;
 
 namespace NirvanaService
 {
@@ -10,6 +6,20 @@ namespace NirvanaService
     {
         static void Main(string[] args)
         {
+            HostFactory.Run(x =>
+            {
+                x.RunAsLocalSystem();
+                x.StartAutomatically();
+                x.EnableShutdown();
+                x.EnableServiceRecovery(c => c.RestartService(1));
+
+                x.Service<ServiceWrapper>(s =>
+                {
+                    s.ConstructUsing(name => new ServiceWrapper(name));
+                    s.WhenStarted(tc => tc.Start());
+                    s.WhenStopped(tc => tc.Stop());
+                });
+            });
         }
     }
 }
