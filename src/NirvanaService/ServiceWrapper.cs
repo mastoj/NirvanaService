@@ -15,9 +15,11 @@ namespace NirvanaService
         private const string ConfigFilePath = ".\\conf\\NirvanaService.json";
 
         private Process _process;
+        private string _serviceName;
 
-        public ServiceWrapper()
+        public ServiceWrapper(string name)
         {
+            _serviceName = name;
             InitLogging();
         }
 
@@ -40,10 +42,10 @@ namespace NirvanaService
             var configs = GetConfigs();
             var serviceName = GetServiceName();
             var config = GetConfigService(configs, serviceName);
-            StartProcess(config);
+            StartProcess(serviceName, config);
         }
 
-        private void StartProcess(ServiceConfig config)
+        private void StartProcess(string serviceName, ServiceConfig config)
         {
             try
             {
@@ -52,12 +54,12 @@ namespace NirvanaService
                     UseShellExecute = false
                 });
                 _process.Exited += (o, e) => Stop();
-                LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0}", config.Executable);
+                LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}", serviceName, config.Executable);
             }
             catch (Exception ex)
             {
                 LogEvent.FailedToStartService.Log(GetType(),
-                    "Failed to start the service with executable: {0} and arguments: {1}", config.Executable,
+                    "Failed to start the service {0} with executable: {1} and arguments: {2}", serviceName, config.Executable,
                     config.Options.ToString(), ex);
                 throw ex;
             }
@@ -75,6 +77,7 @@ namespace NirvanaService
 
         private string GetServiceName()
         {
+            if (!string.IsNullOrWhiteSpace(_serviceName)) return _serviceName;
             try
             {
                 var processId = Process.GetCurrentProcess().Id;
@@ -116,7 +119,7 @@ namespace NirvanaService
             _process.Kill();
             _process.WaitForExit();
             _process.Dispose();
-            LogEvent.ServiceStopped.Log(GetType(), "Service stopped");
+            LogEvent.ServiceStopped.Log(GetType(), "Service stopped: {0}", GetServiceName());
         }
     }
 }

@@ -6,8 +6,12 @@ namespace NirvanaService
     {
         static void Main(string[] args)
         {
+            var serviceName = "";
             HostFactory.Run(x =>
             {
+                x.AddCommandLineDefinition("sname", f => { serviceName = f; });
+                x.ApplyCommandLine();
+
                 x.RunAsLocalSystem();
                 x.StartAutomatically();
                 x.EnableShutdown();
@@ -15,7 +19,7 @@ namespace NirvanaService
 
                 x.Service<ServiceWrapper>(s =>
                 {
-                    s.ConstructUsing(name => new ServiceWrapper());
+                    s.ConstructUsing(() => new ServiceWrapper(serviceName));
                     s.WhenStarted(tc => tc.Start());
                     s.WhenStopped(tc => tc.Stop());
                 });
