@@ -1,5 +1,5 @@
 ﻿{
-    "tomasservice1": {
+    "eventstore": {
         "executable": "C:\\eventstore\\EventStore-OSS-Win-v3.0.0-rc9\\EventStore.ClusterNode.exe",
         "options": {
             "argSeparator": " ",

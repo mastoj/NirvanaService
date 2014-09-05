@@ -2,57 +2,87 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Management;
+using EnumLogger.Extensions;
 using Newtonsoft.Json;
+using NirvanaService.Configuration;
 
 namespace NirvanaService
 {
     internal class ServiceWrapper
     {
-        private string ConfigFilePath = ".\\conf\\NirvanaService.json";
+        private const string ConfigFilePath = ".\\conf\\NirvanaService.json";
 
-        private readonly string _name;
-        private string _a;
         private Process _process;
-
-        public ServiceWrapper(string name, string a = "")
-        {
-            _name = name;
-            _a = a;
-        }
 
         public void Start()
         {
+            var configs = GetConfigs();
+            var serviceName = GetServiceName();
+            var config = GetConfigService(configs, serviceName);
+            StartProcess(config);
+        }
+
+        private void StartProcess(ServiceConfig config)
+        {
             try
             {
-                var configs =
-                    JsonConvert.DeserializeObject<Dictionary<string, ServiceConfig>>(File.ReadAllText(ConfigFilePath));
-
-
-                var processId = Process.GetCurrentProcess().Id;
-
-
-                var query = "SELECT * FROM Win32_Service where ProcessId  = " + processId;
-                var searcher = new ManagementObjectSearcher(query);
-                foreach (var item in searcher.Get())
+                _process = Process.Start(new ProcessStartInfo(config.Executable, config.Options.ToString())
                 {
-                    _a = item["Name"].ToString();
-                }
-                if (configs.ContainsKey(_a))
-                {
-                    var config = configs[_a];
-                    _process = Process.Start(new ProcessStartInfo(config.Executable, config.Options.ToString())
-                    {
-                        UseShellExecute = false
-                    });
-                    _process.Exited += (o, e) => Stop();
-                }
+                    UseShellExecute = false
+                });
+                _process.Exited += (o, e) => Stop();
+                LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0}", config.Executable);
             }
             catch (Exception ex)
             {
-                File.WriteAllText("c:\\tmp\\log.txt", ex.ToString());
+                LogEvent.FailedToStartService.Log(GetType(),
+                    "Failed to start the service with executable: {0} and arguments: {1}", config.Executable,
+                    config.Options.ToString(), ex);
+                throw ex;
+            }
+        }
 
+        private ServiceConfig GetConfigService(Dictionary<string, ServiceConfig> configs, string serviceName)
+        {
+            if (configs.ContainsKey(serviceName))
+            {
+                return configs[serviceName];
+            }
+            LogEvent.MissingConfig.Log(GetType(), "Missing configuration for {0}", serviceName);
+            throw new ApplicationException("Missing configuration for " + serviceName);
+        }
+
+        private string GetServiceName()
+        {
+            try
+            {
+                var processId = Process.GetCurrentProcess().Id;
+                var query = "SELECT * FROM Win32_Service where ProcessId  = " + processId;
+                var searcher = new ManagementObjectSearcher(query);
+                string serviceName = null;
+                foreach (var item in searcher.Get())
+                {
+                    serviceName = item["Name"].ToString();
+                }
+                return serviceName;
+            }
+            catch (Exception)
+            {
+                LogEvent.FailedToGetServiceName.Log(GetType(), "Failed to lookup the installed service name");
+                throw;
+            }
+        }
+
+        private Dictionary<string, ServiceConfig> GetConfigs()
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject<Dictionary<string, ServiceConfig>>(File.ReadAllText(ConfigFilePath));
+            }
+            catch (Exception ex)
+            {
+                LogEvent.ConfigFormat.Log(GetType(), "Failed to parse config file: {0}", ConfigFilePath, ex);
                 throw;
             }
         }
@@ -66,25 +96,7 @@ namespace NirvanaService
             _process.Kill();
             _process.WaitForExit();
             _process.Dispose();
-        }
-    }
-
-    public class ServiceConfig
-    {
-        public string Executable { get; set; }
-        public ServiceOptions Options { get; set; }
-    }
-
-    public class ServiceOptions
-    {
-        public string ArgSeparator { get; set; }
-        public string ArgPrefix { get; set; }
-        public Dictionary<string, object> Arguments { get; set; }
-
-        public override string ToString()
-        {
-            return Arguments.Aggregate("",
-                (aggr, next) => string.Format("{0} {1}{2}{3}{4}", aggr, ArgPrefix, next.Key, ArgSeparator, next.Value));
+            LogEvent.ServiceStopped.Log(GetType(), "Service stopped");
         }
     }
 }

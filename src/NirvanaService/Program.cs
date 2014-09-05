@@ -15,7 +15,7 @@ namespace NirvanaService
 
                 x.Service<ServiceWrapper>(s =>
                 {
-                    s.ConstructUsing(name => new ServiceWrapper(name));
+                    s.ConstructUsing(name => new ServiceWrapper());
                     s.WhenStarted(tc => tc.Start());
                     s.WhenStopped(tc => tc.Stop());
                 });
