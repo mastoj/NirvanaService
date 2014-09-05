@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Management;
 using EnumLogger.Extensions;
+using log4net.Config;
 using Newtonsoft.Json;
 using NirvanaService.Configuration;
 
@@ -14,6 +15,25 @@ namespace NirvanaService
         private const string ConfigFilePath = ".\\conf\\NirvanaService.json";
 
         private Process _process;
+
+        public ServiceWrapper()
+        {
+            InitLogging();
+        }
+
+        private void InitLogging()
+        {
+            var log4NetConfigPath = GetLog4NetPath();
+            XmlConfigurator.ConfigureAndWatch(new FileInfo(log4NetConfigPath));
+        }
+
+        private string GetLog4NetPath()
+        {
+            var assemblyInfo = new FileInfo(typeof(ServiceWrapper).Assembly.Location);
+            var assemblyFolder = assemblyInfo.Directory;
+            var path = Path.Combine(assemblyFolder.FullName, "log4net.config");
+            return path;
+        }
 
         public void Start()
         {
