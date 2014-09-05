@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Do not remove this test for UTF-8: if ??? doesn?t appear as greek uppercase omega letter enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>nirvanaservice</id>
+    <title>NirvanaService</title>
+    <version>1.0.0</version>
+    <authors>Tomas Jannsson</authors>
+    <owners>Tomas Jansson</owners>
+    <summary>A service that can run arbitrary exe in process.</summary>
+    <description>A service that can run arbitrary exe in process.</description>
+    <projectUrl>https://github.com/mastoj/NirvanaService</projectUrl>
+    <tags>service topshelf</tags>
+    <copyright></copyright>
+    <licenseUrl>https://github.com/mastoj/NirvanaService/blob/master/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <releaseNotes></releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
