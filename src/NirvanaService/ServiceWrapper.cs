@@ -119,7 +119,7 @@ namespace NirvanaService
             _process.Kill();
             _process.WaitForExit();
             _process.Dispose();
-            LogEvent.ServiceStopped.Log(GetType(), "Service stopped: {0}", GetServiceName());
+            LogEvent.ServiceStopped.Log(GetType(), "Service stopped: {0}, process id: {1}", GetServiceName(), _process.Id);
         }
     }
 }
