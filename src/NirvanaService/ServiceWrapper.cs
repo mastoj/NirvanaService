@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management;
 using EnumLogger.Extensions;
 using log4net.Config;
@@ -14,8 +15,7 @@ namespace NirvanaService
     {
         private const string ConfigFilePath = ".\\conf\\NirvanaService.json";
 
-        private Process _process;
-        private string _serviceName;
+        private readonly string _serviceName;
 
         public ServiceWrapper(string name)
         {
@@ -49,11 +49,11 @@ namespace NirvanaService
         {
             try
             {
-                _process = Process.Start(new ProcessStartInfo(config.Executable, config.Options.ToString())
+                var process = Process.Start(new ProcessStartInfo(config.Executable, config.Options.ToString())
                 {
                     UseShellExecute = false
                 });
-                _process.Exited += (o, e) => Stop();
+                process.Exited += (o, e) => Stop();
                 LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}", serviceName, config.Executable);
             }
             catch (Exception ex)
@@ -112,14 +112,60 @@ namespace NirvanaService
 
         public void Stop()
         {
-            _process.Refresh();
+            try
+            {
+                var serviceName = GetServiceName();
+                LogEvent.StoppingService.Log(GetType(), "Stopping service: {0}", serviceName);
 
-            if (_process.HasExited) return;
+                var processId = Convert.ToUInt32(Process.GetCurrentProcess().Id);
+                KillAllProcessesSpawnedBy(processId, processId);
 
-            _process.Kill();
-            _process.WaitForExit();
-            _process.Dispose();
-            LogEvent.ServiceStopped.Log(GetType(), "Service stopped: {0}, process id: {1}", GetServiceName(), _process.Id);
+                LogEvent.ServiceStopped.Log(GetType(), "Service stopped: {0}", GetServiceName());
+            }
+            catch (Exception ex)
+            {
+                LogEvent.StopFailed.Log(GetType(), "Failed to stop service", ex);
+                throw;
+            }
+        }
+
+
+        private static void KillAllProcessesSpawnedBy(uint parentProcessId, uint mainProcessId)
+        {
+            var searcher = new ManagementObjectSearcher(
+                "SELECT * " +
+                "FROM Win32_Process " +
+                "WHERE ParentProcessId=" + parentProcessId);
+            var collection = searcher.Get();
+            if (collection.Count > 0)
+            {
+                foreach (var item in collection)
+                {
+                    var childProcessId = (uint)item["ProcessId"];
+                    if (childProcessId != mainProcessId)
+                    {
+                        if (childProcessId != Process.GetCurrentProcess().Id)
+                        {
+                            KillAllProcessesSpawnedBy(childProcessId, mainProcessId);
+
+                            KillProcessById(childProcessId);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void KillProcessById(uint processId)
+        {
+
+            var process = Process.GetProcessById(Convert.ToInt32(processId));
+            process.Refresh();
+
+            if (process.HasExited) return;
+
+            process.Kill();
+            process.WaitForExit();
+            process.Dispose();
         }
     }
 }

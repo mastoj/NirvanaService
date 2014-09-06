@@ -7,6 +7,8 @@ namespace NirvanaService
         MissingConfig,
         FailedToStartService,
         ServiceStarted,
-        ServiceStopped
+        ServiceStopped,
+        StoppingService,
+        StopFailed
     }
 }
