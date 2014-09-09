@@ -54,7 +54,7 @@ namespace NirvanaService
                     UseShellExecute = false
                 });
                 process.Exited += (o, e) => Stop();
-                LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}", serviceName, config.Executable);
+                LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}, and arguments: {2}", serviceName, config.Executable, config.Options);
             }
             catch (Exception ex)
             {
