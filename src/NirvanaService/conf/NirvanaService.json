@@ -7,5 +7,15 @@
                 "--db": "c:\\tmp\\es\\data"
             }
         }
+    },
+    "elasticsearch": {
+        "executable": "C:\\java\\jdk1.7.0_67\\bin\\java.exe",
+        "options": {
+            "argSeparator": " ",
+            "arguments": {
+                "-classpath": "\"C:\\elasticsearch\\elasticsearch-1.1.0\\lib\\*;C:\\elasticsearch\\elasticsearch-1.1.0\\lib\\sigar\\*\"",
+                "org.elasticsearch.bootstrap.Bootstrap": ""
+            }
+        }
     }
 }
