@@ -1,0 +1,11 @@
+﻿{
+    "executable": "C:\\java\\jdk1.7.0_51\\bin\\java.exe",
+    "options": {
+        "argSeparator": " ",
+        "arguments": {
+            "-classpath": "\"C:\\elasticsearch\\elasticsearch-1.2.1\\lib\\*;C:\\elasticsearch\\elasticsearch-1.2.1\\lib\\sigar\\*\"",
+            "org.elasticsearch.bootstrap.Bootstrap": ""
+        }
+    }
+}
+

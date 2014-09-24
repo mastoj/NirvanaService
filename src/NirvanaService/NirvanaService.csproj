@@ -59,7 +59,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="StringExtensions.cs" />
-    <None Include="conf\NirvanaService.json">
+    <None Include="conf\eventstore.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="conf\elasticsearch.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="LogEvent.cs" />

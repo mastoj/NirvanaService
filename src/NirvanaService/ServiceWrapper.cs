@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Management;
 using EnumLogger.Extensions;
 using log4net.Config;
@@ -13,7 +12,7 @@ namespace NirvanaService
 {
     internal class ServiceWrapper
     {
-        private const string ConfigFilePath = ".\\conf\\NirvanaService.json";
+        private const string ConfigFolderPath = "conf";
 
         private readonly string _serviceName;
 
@@ -39,9 +38,8 @@ namespace NirvanaService
 
         public void Start()
         {
-            var configs = GetConfigs();
             var serviceName = GetServiceName();
-            var config = GetConfigService(configs, serviceName);
+            var config = GetConfig(serviceName);
             StartProcess(serviceName, config);
         }
 
@@ -49,12 +47,12 @@ namespace NirvanaService
         {
             try
             {
-                var process = Process.Start(new ProcessStartInfo(config.Executable, config.Options.ToString())
+                var process = Process.Start(new ProcessStartInfo(config.Executable.ResolveEnvVariables(), config.Options.ToString().ResolveEnvVariables())
                 {
                     UseShellExecute = false
                 });
                 process.Exited += (o, e) => Stop();
-                LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}, and arguments: {2}", serviceName, config.Executable, config.Options);
+                LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}, and arguments: {2}", serviceName, config.Executable.ResolveEnvVariables(), config.Options.ToString().ResolveEnvVariables());
             }
             catch (Exception ex)
             {
@@ -63,16 +61,6 @@ namespace NirvanaService
                     config.Options.ToString(), ex);
                 throw ex;
             }
-        }
-
-        private ServiceConfig GetConfigService(Dictionary<string, ServiceConfig> configs, string serviceName)
-        {
-            if (configs.ContainsKey(serviceName))
-            {
-                return configs[serviceName];
-            }
-            LogEvent.MissingConfig.Log(GetType(), "Missing configuration for {0}", serviceName);
-            throw new ApplicationException("Missing configuration for " + serviceName);
         }
 
         private string GetServiceName()
@@ -97,15 +85,22 @@ namespace NirvanaService
             }
         }
 
-        private Dictionary<string, ServiceConfig> GetConfigs()
+        private ServiceConfig GetConfig(string serviceName)
         {
+            var currentFolder = Environment.CurrentDirectory;
+            var path = Path.Combine(currentFolder, ConfigFolderPath, string.Format("{0}.json", serviceName));
+            if (!File.Exists(path))
+            {
+                LogEvent.MissingConfig.Log(GetType(), "Missing configuration for {0}", serviceName);
+                throw new ApplicationException("Missing configuration for " + serviceName);
+            }
             try
             {
-                return JsonConvert.DeserializeObject<Dictionary<string, ServiceConfig>>(File.ReadAllText(ConfigFilePath));
+                return JsonConvert.DeserializeObject<ServiceConfig>(File.ReadAllText(path));
             }
             catch (Exception ex)
             {
-                LogEvent.ConfigFormat.Log(GetType(), "Failed to parse config file: {0}", ConfigFilePath, ex);
+                LogEvent.ConfigFormat.Log(GetType(), "Failed to parse config file: {0} for service: {1}", path, serviceName, ex);
                 throw;
             }
         }

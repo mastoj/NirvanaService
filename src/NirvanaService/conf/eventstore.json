@@ -1,0 +1,9 @@
+﻿{
+    "executable": "%ChocolateyInstall%\\bin\\EventStore.ClusterNode.exe",
+    "options": {
+        "argSeparator": " ",
+        "arguments": {
+            "--db": "c:\\tmp\\es\\data"
+        }
+    }
+}

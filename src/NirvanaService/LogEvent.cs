@@ -9,6 +9,7 @@ namespace NirvanaService
         ServiceStarted,
         ServiceStopped,
         StoppingService,
-        StopFailed
+        StopFailed,
+        Info
     }
 }
