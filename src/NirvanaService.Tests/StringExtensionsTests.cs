@@ -13,6 +13,13 @@ namespace NirvanaService.Tests
             Environment.SetEnvironmentVariable("TEST2", "World");
         }
 
+
+        [Test]
+        public void Playground()
+        {
+            var str = "%ProgramFiles%\\java\\jdk1.7.0_51\\bin\\java.exe".ResolveEnvVariables();
+        }
+
         [Test]
         public void ResolveEnvVariables_ShouldReturnSameStringIfNoEnvironmentVariables()
         {

@@ -1,9 +1,10 @@
 ﻿{
-    "executable": "%ChocolateyInstall%\\bin\\EventStore.ClusterNode.exe",
+    "executable": "%ProgramFiles%\\eventstore\\bin\\EventStore.ClusterNode.exe",
     "options": {
         "argSeparator": " ",
         "arguments": {
-            "--db": "c:\\tmp\\es\\data"
+            "--db": "c:\\tmp\\es2\\data",
+            "--run-projections": "all"
         }
     }
 }

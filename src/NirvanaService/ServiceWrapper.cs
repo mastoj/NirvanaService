@@ -35,7 +35,7 @@ namespace NirvanaService
             var path = Path.Combine(assemblyFolder.FullName, "log4net.config");
             return path;
         }
-
+        
         public void Start()
         {
             var serviceName = GetServiceName();
@@ -57,7 +57,7 @@ namespace NirvanaService
             catch (Exception ex)
             {
                 LogEvent.FailedToStartService.Log(GetType(),
-                    "Failed to start the service {0} with executable: {1} and arguments: {2}", serviceName, config.Executable,
+                    "Failed to start the service {0} with executable: {1} and arguments: {2}", serviceName, config.Executable.ResolveEnvVariables(),
                     config.Options.ToString(), ex);
                 throw ex;
             }
