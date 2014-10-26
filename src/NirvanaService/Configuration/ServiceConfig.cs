@@ -4,5 +4,6 @@ namespace NirvanaService.Configuration
     {
         public string Executable { get; set; }
         public ServiceOptions Options { get; set; }
+        public string WorkingDirectory { get; set; }
     }
 }

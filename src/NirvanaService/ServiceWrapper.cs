@@ -47,10 +47,14 @@ namespace NirvanaService
         {
             try
             {
-                var process = Process.Start(new ProcessStartInfo(config.Executable.ResolveEnvVariables(), config.Options.ToString().ResolveEnvVariables())
+                var startInfo = new ProcessStartInfo(config.Executable.ResolveEnvVariables(),
+                    config.Options.ToString().ResolveEnvVariables());
+                if (!string.IsNullOrWhiteSpace(config.WorkingDirectory))
                 {
-                    UseShellExecute = false
-                });
+                    startInfo.WorkingDirectory = config.WorkingDirectory.ResolveEnvVariables();
+                }
+                startInfo.UseShellExecute = false;
+                var process = Process.Start(startInfo);
                 process.Exited += (o, e) => Stop();
                 LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}, and arguments: {2}", serviceName, config.Executable.ResolveEnvVariables(), config.Options.ToString().ResolveEnvVariables());
             }
