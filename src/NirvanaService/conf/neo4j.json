@@ -1,0 +1,18 @@
+﻿{
+    "executable": "%ProgramData%\\java\\jdk1.7.0_67\\bin\\java.exe",
+    "workingDirectory": "%ProgramData%\\neo4j\\neo4j-community-2.1.5\\bin",
+    "options": {
+        "argSeparator": "=",
+        "arguments": {
+            "-Djava.util.logging.config.file": "\"conf\\windows-wrapper-logging.properties\"",
+            "-DworkingDir": "\"%ProgramData%\\neo4j\\neo4j-community-2.1.5\"",
+            "-DconfigFile": "conf/neo4j-wrapper.conf",
+            "-DserverClasspath": "lib/*.jar;system/lib/*.jar;plugins/**/*.jar;./conf*",
+            "-DserverMainClass": "org.neo4j.server.Bootstrapper",
+            "-Dorg.neo4j.cluster.logdirectory": "\"%ProgramData%\\neo4j\\neo4j-community-2.1.5\\data\\log\"",
+            "-jar": "",
+            "\"%ProgramData%\\neo4j\\neo4j-community-2.1.5\\bin\\windows-service-wrapper-5.jar\"": "",
+            "neo4j": ""
+        }
+    }
+}

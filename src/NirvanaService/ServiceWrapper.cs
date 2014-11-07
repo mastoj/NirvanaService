@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
+using System.Threading;
 using EnumLogger.Extensions;
 using log4net.Config;
 using Newtonsoft.Json;
@@ -39,6 +40,7 @@ namespace NirvanaService
         public void Start()
         {
             var serviceName = GetServiceName();
+            LogEvent.StartingService.Log(GetType(), "Starting service: {0}", serviceName);
             var config = GetConfig(serviceName);
             StartProcess(serviceName, config);
         }
@@ -54,8 +56,14 @@ namespace NirvanaService
                     startInfo.WorkingDirectory = config.WorkingDirectory.ResolveEnvVariables();
                 }
                 startInfo.UseShellExecute = false;
+                startInfo.CreateNoWindow = false;
                 var process = Process.Start(startInfo);
-                process.Exited += (o, e) => Stop();
+
+                SaveProcessIds(serviceName, Process.GetCurrentProcess().Id, process.Id);
+
+                LogEvent.Info.Log(GetType(), "Service process started: {0}", Process.GetCurrentProcess().Id);
+                LogEvent.Info.Log(GetType(), "Sub process started: {0}", process.Id);
+                process.Exited += (o, e) => LogEvent.ServiceStarted.Log(GetType(), "Sub process exited: {0}", process.Id); ;
                 LogEvent.ServiceStarted.Log(GetType(), "Successfully started: {0} with executable: {1}, and arguments: {2}", serviceName, config.Executable.ResolveEnvVariables(), config.Options.ToString().ResolveEnvVariables());
             }
             catch (Exception ex)
@@ -65,6 +73,25 @@ namespace NirvanaService
                     config.Options.ToString(), ex);
                 throw ex;
             }
+        }
+
+        private void SaveProcessIds(string serviceName, int thisProcessId, int associatedId)
+        {
+            var pidFilePath = GetPidFilePath(serviceName);
+            using (var fileStream = File.Open(pidFilePath, FileMode.CreateNew, FileAccess.ReadWrite))
+            using(var streamWriter = new StreamWriter(fileStream))
+            {
+                LogEvent.Info.Log(GetType(), "Trying to write pid file", pidFilePath, thisProcessId, associatedId);
+                streamWriter.Write("{0},{1}", thisProcessId, associatedId);
+                LogEvent.Info.Log(GetType(), "Wrote pid file: {0}, {1}, {2}", pidFilePath, thisProcessId, associatedId);
+            }
+        }
+
+        private string GetPidFilePath(string serviceName)
+        {
+            var currentFolder = Environment.CurrentDirectory;
+            var path = Path.Combine(currentFolder, ConfigFolderPath, string.Format("{0}.pid", serviceName));
+            return path;
         }
 
         private string GetServiceName()
@@ -114,10 +141,10 @@ namespace NirvanaService
             try
             {
                 var serviceName = GetServiceName();
-                LogEvent.StoppingService.Log(GetType(), "Stopping service: {0}", serviceName);
-
-                var processId = Convert.ToUInt32(Process.GetCurrentProcess().Id);
-                KillAllProcessesSpawnedBy(processId, processId);
+                var processIds = GetProcessIds(serviceName);
+                LogEvent.StoppingService.Log(GetType(), "Stopping service: {0}, {1}, {2}", serviceName, processIds.Item1, processIds.Item2);
+                KillAllProcessesSpawnedBy(processIds.Item2, processIds.Item2);
+                KillAllProcessesSpawnedBy(processIds.Item1, processIds.Item1);
 
                 LogEvent.ServiceStopped.Log(GetType(), "Service stopped: {0}", GetServiceName());
             }
@@ -125,6 +152,17 @@ namespace NirvanaService
             {
                 LogEvent.StopFailed.Log(GetType(), "Failed to stop service", ex);
                 throw;
+            }
+        }
+
+        private Tuple<uint, uint> GetProcessIds(string serviceName)
+        {
+            var pidFilePath = GetPidFilePath(serviceName);
+            using(var fileStream = File.Open(pidFilePath, FileMode.Open, FileAccess.ReadWrite))
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var line = streamReader.ReadLine().Split(',');
+                return Tuple.Create(Convert.ToUInt32(int.Parse(line[0])), Convert.ToUInt32(int.Parse(line[1])));
             }
         }
 
@@ -156,6 +194,7 @@ namespace NirvanaService
 
         private static void KillProcessById(uint processId)
         {
+            LogEvent.StoppingService.Log(typeof(ServiceWrapper), "Killing process: {0}", processId);
 
             var process = Process.GetProcessById(Convert.ToInt32(processId));
             process.Refresh();

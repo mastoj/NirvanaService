@@ -58,6 +58,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="conf\neo4j.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Compile Include="StringExtensions.cs" />
     <None Include="conf\eventstore.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
