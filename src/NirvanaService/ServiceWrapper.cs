@@ -78,7 +78,7 @@ namespace NirvanaService
         private void SaveProcessIds(string serviceName, int thisProcessId, int associatedId)
         {
             var pidFilePath = GetPidFilePath(serviceName);
-            using (var fileStream = File.Open(pidFilePath, FileMode.CreateNew, FileAccess.ReadWrite))
+            using (var fileStream = File.Open(pidFilePath, FileMode.Create, FileAccess.ReadWrite))
             using(var streamWriter = new StreamWriter(fileStream))
             {
                 LogEvent.Info.Log(GetType(), "Trying to write pid file", pidFilePath, thisProcessId, associatedId);
